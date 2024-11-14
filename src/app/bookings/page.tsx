@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BrowserProvider, Contract } from "ethers";
-import { contractABI } from "@/lib/contractABI";
 import { Button } from "@/components/ui/button";
-import { FEATURED_TOURS, CONTRACT_ADDRESS } from "@/lib/constants";
+import { FEATURED_TOURS } from "@/lib/constants";
 import { Navigation } from "@/components/Navigation";
-import { Booking, BlockchainBooking } from "@/types";
+import { Booking } from "@/types";
+import { useWeb3 } from "@/contexts/Web3Context";
 
 export default function BookingsPage() {
+  const { getAllBookings } = useWeb3();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,38 +50,12 @@ export default function BookingsPage() {
         setIsLoading(false);
         return;
       }
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new Contract(CONTRACT_ADDRESS, contractABI, signer);
-      console.log("Contract instance:", contract);
-
-      try {
-        const result = await contract.getAllBookings();
-        console.log("Raw contract result:", result);
-
-        if (!result) {
-          throw new Error("No booking data returned from contract");
-        }
-
-        const transformedBookings = result.map(
-          (booking: BlockchainBooking) => ({
-            id: Number(booking.id),
-            tourId: Number(booking.tourId),
-            date: new Date(Number(booking.date) * 1000),
-            status: booking.status,
-          })
-        );
-
-        setBookings(transformedBookings);
-      } catch (contractError) {
-        console.error("Contract call error:", contractError);
-        setError("Failed to fetch bookings from the blockchain");
-      }
-
+      const bookings = await getAllBookings();
+      setBookings(bookings);
       setIsLoading(false);
-    } catch (error) {
-      console.error("Error loading bookings:", error);
-      setError("Failed to load bookings. Please try again later.");
+    } catch (contractError) {
+      console.error("Contract call error:", contractError);
+      setError("Failed to fetch bookings from the blockchain");
       setIsLoading(false);
     }
   }
@@ -131,7 +105,7 @@ export default function BookingsPage() {
           ) : (
             <div className="grid gap-6">
               {bookings.map((booking) => {
-                const tour = getTourDetails(booking.tourId);
+                const tour = getTourDetails(booking.id);
                 return (
                   <div
                     key={booking.id}
@@ -145,18 +119,18 @@ export default function BookingsPage() {
                         {tour.city}, {tour.country}
                       </p>
                       <p className="text-gray-600">
-                        Date: {booking.date.toLocaleDateString()}
+                        Date: {booking.timestamp.toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                       <span
                         className={`px-3 py-1 rounded-full text-sm ${
-                          booking.status === "active"
+                          booking.isPaid
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {booking.status}
+                        {booking.isPaid ? "Paid" : "Unpaid"}
                       </span>
                       <Button
                         variant="outline"

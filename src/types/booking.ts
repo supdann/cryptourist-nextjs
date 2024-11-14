@@ -1,14 +1,23 @@
 export interface BlockchainBooking {
-  receiver: string;
   id: bigint;
-  tourId: bigint;
-  date: bigint;
-  status: string;
+  totalAmount: bigint;
+  operatorFee: bigint;
+  timestamp: bigint;
+  customer: string;
+  payer: string;
+  isPaid: boolean;
+  isCompleted: boolean;
+  isRefunded: boolean;
 }
 
 export interface Booking {
   id: number;
-  tourId: number;
-  date: Date;
-  status: string;
+  totalAmount: number;
+  operatorFee: number;
+  timestamp: Date;
+  customer: string;
+  payer: string;
+  isPaid: boolean;
+  isCompleted: boolean;
+  isRefunded: boolean;
 } 

@@ -1,12 +1,24 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { CONTRACT_ADDRESS } from "@/lib/constants";
+import { contractABI } from "@/lib/contractABI";
+import { BlockchainBooking, Booking } from "@/types";
+import { Contract, formatUnits } from "ethers";
+import { BrowserProvider } from "ethers";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface Web3ContextType {
   isConnected: boolean;
   userAddress: string;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
+  getAllBookings: () => Promise<Booking[]>;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -98,6 +110,53 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setUserAddress("");
   }
 
+  async function getAllBookings(): Promise<Booking[]> {
+    if (!window.ethereum) {
+      return [];
+    }
+    const provider = new BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new Contract(CONTRACT_ADDRESS, contractABI, signer);
+
+    const result = await contract.getAllBookings();
+    console.log("Raw contract result:", result);
+
+    if (!result) {
+      throw new Error("No booking data returned from contract");
+    }
+
+    const transformedBookings = transformData(result);
+    return transformedBookings;
+  }
+
+  function fromWei(value: string, unit: string) {
+    return formatUnits(value, unit);
+  }
+
+  function transformData(rawData: any): Booking[] {
+    const ids = rawData.ids || rawData[0];
+    const amounts = rawData.amounts || rawData[1];
+    const operatorFees = rawData.operatorFees || rawData[2];
+    const timestamps = rawData.timestamps || rawData[3];
+    const customers = rawData.customers || rawData[4];
+    const payers = rawData.payers || rawData[5];
+    const paidStatus = rawData.paidStatus || rawData[6];
+    const completedStatus = rawData.completedStatus || rawData[7];
+    const refundedStatus = rawData.refundedStatus || rawData[8];
+
+    return ids.map((id: any, index: number) => ({
+      id: Number(id),
+      totalAmount: parseFloat(fromWei(amounts[index], "ether")),
+      operatorFee: parseFloat(fromWei(operatorFees[index], "ether")),
+      timestamp: new Date(Number(timestamps[index]) * 1000),
+      customer: customers[index],
+      payer: payers[index],
+      isPaid: Boolean(paidStatus[index]),
+      isCompleted: Boolean(completedStatus[index]),
+      isRefunded: Boolean(refundedStatus[index]),
+    }));
+  }
+
   return (
     <Web3Context.Provider
       value={{
@@ -105,6 +164,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         userAddress,
         connectWallet,
         disconnectWallet,
+        getAllBookings,
       }}
     >
       {children}
@@ -118,4 +178,4 @@ export function useWeb3() {
     throw new Error("useWeb3 must be used within a Web3Provider");
   }
   return context;
-} 
+}

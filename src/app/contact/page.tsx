@@ -6,10 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useWeb3 } from "@/contexts/Web3Context";
-import { BrowserProvider, Contract } from "ethers";
-import { contractABI } from "@/lib/contractABI";
-import { CONTRACT_ADDRESS } from "@/lib/constants";
-import { BlockchainBooking } from "@/types/booking";
+import { Booking } from "@/types/booking";
 
 const CONTACT_REASONS = [
   "General Inquiry",
@@ -24,8 +21,8 @@ const CONTACT_REASONS = [
 type ContactReason = (typeof CONTACT_REASONS)[number];
 
 export default function ContactPage() {
-  const { isConnected, userAddress } = useWeb3();
-  const [bookings, setBookings] = useState<BlockchainBooking[]>([]);
+  const { isConnected, userAddress, getAllBookings } = useWeb3();
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -51,10 +48,8 @@ export default function ContactPage() {
           return;
         }
 
-        const provider = new BrowserProvider(window.ethereum);
-        const contract = new Contract(CONTRACT_ADDRESS, contractABI, provider);
-        const bookingsData = await contract.getBookingsByUser(userAddress);
-        setBookings(bookingsData);
+        const bookings = await getAllBookings();
+        setBookings(bookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
@@ -251,7 +246,7 @@ export default function ContactPage() {
                         >
                           Booking #{booking.id.toString()} -{" "}
                           {new Date(
-                            Number(booking.date) * 1000
+                            Number(booking.timestamp) * 1000
                           ).toLocaleDateString()}
                         </option>
                       ))}
