@@ -1,14 +1,4 @@
 {
   "buildCommand": "pnpm turbo build",
-  "ignoreCommand": "pnpm dlx turbo-ignore",
-  "edge-config": {
-    "runtimeConfig": {
-      "contractAddress": {
-        "type": "string"
-      },
-      "notifications": {
-        "type": "boolean"
-      }
-    }
-  }
+  "ignoreCommand": "pnpm dlx turbo-ignore"
 }
