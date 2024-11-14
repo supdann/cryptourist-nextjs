@@ -1,7 +1,11 @@
 {
-  "name": "latest-nextjs-app",
+  "name": "cryptourists",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Daniel Montano",
+    "email": "hello@danielmontano.io"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
