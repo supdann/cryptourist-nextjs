@@ -1,11 +1,14 @@
-import { Bike } from "lucide-react";
+import { Bike, Settings, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useWeb3 } from "@/contexts/Web3Context";
+import { useRouter } from "next/navigation";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 
 export const Navigation = () => {
   const { isConnected, userAddress, connectWallet, disconnectWallet } =
     useWeb3();
+  const router = useRouter();
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-md fixed top-0 left-0 right-0 z-50">
@@ -17,17 +20,11 @@ export const Navigation = () => {
           >
             <Bike className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              Cryptourists
+              CRYPTOurists
             </span>
           </Link>
         </div>
         <div className="flex items-center space-x-6">
-          <Link
-            href="/tours"
-            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
-          >
-            Tours
-          </Link>
           {isConnected && (
             <Link
               href="/bookings"
@@ -53,14 +50,33 @@ export const Navigation = () => {
               <span className="text-sm bg-blue-50 text-blue-700 py-1.5 px-3 rounded-full font-medium">
                 {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
               </span>
-              <Button
-                onClick={disconnectWallet}
-                variant="outline"
-                size="sm"
-                className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-              >
-                Disconnect
-              </Button>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 rounded-full"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="User actions">
+                  <DropdownItem
+                    key="settings"
+                    startContent={<Settings className="mr-2 h-4 w-4" />}
+                    onClick={() => router.push("/settings")}
+                  >
+                    Settings
+                  </DropdownItem>
+                  <DropdownItem
+                    key="logout"
+                    startContent={<LogOut className="mr-2 h-4 w-4" />}
+                    onClick={disconnectWallet}
+                  >
+                    Logout
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           ) : (
             <Button

@@ -1,10 +1,8 @@
 "use client";
 
-import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { contractABI } from "@/lib/contractABI";
 import { Booking } from "@/types";
-import { Contract, ethers, formatUnits } from "ethers";
-import { BrowserProvider } from "ethers";
+import { Contract, ethers, formatUnits, BrowserProvider } from "ethers";
 import {
   createContext,
   useContext,
@@ -12,14 +10,20 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { useSettings } from "./SettingsContext";
+// import { CONTRACT_ADDRESS } from "@/lib/constants";
 
 interface Web3ContextType {
   isConnected: boolean;
   userAddress: string;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
-  getAllBookings: () => Promise<Booking[]>;
-  payBooking: (bookingId: number, amount: string) => Promise<void>;
+  getAllBookings: (contractAddress: string) => Promise<Booking[]>;
+  payBooking: (
+    bookingId: number,
+    amount: string,
+    contractAddress: string
+  ) => Promise<void>;
 }
 
 interface RawBookingData {
@@ -37,12 +41,20 @@ interface RawBookingData {
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  const { settings, getContractAddress } = useSettings();
+
   const [isConnected, setIsConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  // const [contractAddress, setContractAddress] = useState(CONTRACT_ADDRESS);
 
   useEffect(() => {
     checkIfWalletIsConnected();
-  }, []);
+    // Print current contract address
+    getContractAddress().then((address) => {
+      // setContractAddress(address);
+      console.log("Current contract address:", address);
+    });
+  }, [settings]);
 
   async function checkIfWalletIsConnected() {
     if (typeof window.ethereum !== "undefined") {
@@ -123,13 +135,13 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setUserAddress("");
   }
 
-  async function getAllBookings(): Promise<Booking[]> {
+  async function getAllBookings(contractAddress: string): Promise<Booking[]> {
     if (!window.ethereum) {
       return [];
     }
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
-    const contract = new Contract(CONTRACT_ADDRESS, contractABI, signer);
+    const contract = new Contract(contractAddress, contractABI, signer);
 
     const result = await contract.getAllBookings();
     console.log("Raw contract result:", result);
@@ -194,7 +206,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }));
   }
 
-  async function payBooking(bookingId: number, amount: string): Promise<void> {
+  async function payBooking(
+    bookingId: number,
+    amount: string,
+    contractAddress: string
+  ): Promise<void> {
     if (!window.ethereum) {
       throw new Error("Ethereum provider not found");
     }
@@ -202,7 +218,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     try {
       const provider = new BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new Contract(CONTRACT_ADDRESS, contractABI, signer);
+      const contract = new Contract(contractAddress, contractABI, signer);
 
       // Call the smart contract's payBooking function
       const tx = await contract.payBooking(bookingId, {

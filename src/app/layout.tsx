@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Web3Provider } from "@/contexts/Web3Context";
+import { NextUIProvider } from "@nextui-org/react";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,7 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Web3Provider>{children}</Web3Provider>
+        <NextUIProvider>
+          <SettingsProvider>
+            <Web3Provider>{children}</Web3Provider>
+          </SettingsProvider>
+        </NextUIProvider>
       </body>
     </html>
   );

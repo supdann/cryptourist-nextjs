@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import { Booking } from "@/types";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { BookingCard } from "@/components/BookingCard";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function BookingsPage() {
   const { getAllBookings } = useWeb3();
@@ -15,6 +16,7 @@ export default function BookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { getContractAddress } = useSettings();
 
   useEffect(() => {
     async function checkWalletAndLoadBookings() {
@@ -51,7 +53,9 @@ export default function BookingsPage() {
         setIsLoading(false);
         return;
       }
-      const bookings = await getAllBookings();
+      const contractAddress = await getContractAddress();
+      console.log("BookingsPage: contractAddress", contractAddress);
+      const bookings = await getAllBookings(contractAddress);
       setBookings(bookings);
       setIsLoading(false);
     } catch (contractError) {
