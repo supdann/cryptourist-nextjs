@@ -3,7 +3,7 @@
 import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { contractABI } from "@/lib/contractABI";
 import { BlockchainBooking, Booking } from "@/types";
-import { Contract, formatUnits } from "ethers";
+import { Contract, ethers, formatUnits } from "ethers";
 import { BrowserProvider } from "ethers";
 import {
   createContext,
@@ -19,6 +19,7 @@ interface Web3ContextType {
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   getAllBookings: () => Promise<Booking[]>;
+  payBooking: (bookingId: number, amount: string) => Promise<void>;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -133,6 +134,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return formatUnits(value, unit);
   }
 
+  // async function getBookingDetails(bookingId: bigint): Promise<Booking> {
+  //   const bookings = await getAllBookings();
+  //   return bookings.find((booking) => booking.id === bookingId);
+  // }
+
   function transformData(rawData: any): Booking[] {
     const ids = rawData.ids || rawData[0];
     const amounts = rawData.amounts || rawData[1];
@@ -157,6 +163,28 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }));
   }
 
+  async function payBooking(bookingId: number, amount: string): Promise<void> {
+    if (!window.ethereum) {
+      throw new Error("Ethereum provider not found");
+    }
+
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new Contract(CONTRACT_ADDRESS, contractABI, signer);
+
+      // Call the smart contract's payBooking function
+      const tx = await contract.payBooking(bookingId, {
+        value: ethers.parseUnits(amount, "ether"),
+      });
+
+      await tx.wait();
+    } catch (error) {
+      console.error("Error paying for booking:", error);
+      throw error;
+    }
+  }
+
   return (
     <Web3Context.Provider
       value={{
@@ -165,6 +193,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         connectWallet,
         disconnectWallet,
         getAllBookings,
+        payBooking,
       }}
     >
       {children}

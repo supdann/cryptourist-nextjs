@@ -7,6 +7,7 @@ import { FEATURED_TOURS } from "@/lib/constants";
 import { Navigation } from "@/components/Navigation";
 import { Booking } from "@/types";
 import { useWeb3 } from "@/contexts/Web3Context";
+import { BookingCard } from "@/components/BookingCard";
 
 export default function BookingsPage() {
   const { getAllBookings } = useWeb3();
@@ -28,7 +29,7 @@ export default function BookingsPage() {
           method: "eth_accounts",
         })) as string[];
         if (accounts.length === 0) {
-          router.push("/"); // Redirect to home if not connected
+          router.push("/");
           return;
         }
 
@@ -104,50 +105,13 @@ export default function BookingsPage() {
             </div>
           ) : (
             <div className="grid gap-6">
-              {bookings.map((booking) => {
-                const tour = getTourDetails(booking.id);
-                return (
-                  <div
-                    key={booking.id}
-                    className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                  >
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">
-                        {tour.title}
-                      </h3>
-                      <p className="text-gray-600">
-                        {tour.city}, {tour.country}
-                      </p>
-                      <p className="text-gray-600">
-                        Date: {booking.timestamp.toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          booking.isPaid
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {booking.isPaid ? "Paid" : "Unpaid"}
-                      </span>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          router.push(
-                            `/tours/${tour.title
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")}`
-                          )
-                        }
-                      >
-                        View Tour
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {bookings.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  tour={getTourDetails(booking.id)}
+                />
+              ))}
             </div>
           )}
         </div>
