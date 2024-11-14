@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { FEATURED_TOURS } from "@/lib/constants";
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 interface HeroProps {
   locations: string[];
@@ -24,6 +26,33 @@ export function Hero({
   setShowSuggestions,
 }: HeroProps) {
   const router = useRouter();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const images = ['/images/hero_bike_1.avif', '/images/hero_bike_2.avif', '/images/hero_bike_3.avif'];
+  
+  useEffect(() => {
+    // Preload images
+    Promise.all(
+      images.map((src) => {
+        return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.src = src;
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+        });
+      })
+    ).then(() => {
+      setImagesLoaded(true);
+    });
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredLocations = locations.filter((location) =>
     location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,14 +81,40 @@ export function Hero({
   };
 
   return (
-    <section className="bg-blue-600 text-white min-h-screen flex items-center relative">
-      <div className="absolute inset-0 bg-black/30" />
+    <section className="bg-blue-600 text-white min-h-screen flex items-center relative overflow-hidden">
+      {/* Background Images */}
+      {images.map((image, index) => (
+        <div
+          key={image}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            !imagesLoaded ? 'opacity-0' : ''
+          }`}
+          style={{
+            opacity: currentImageIndex === index ? 1 : 0,
+            zIndex: 1
+          }}
+        >
+          <Image
+            src={image}
+            alt={`Hero background ${index + 1}`}
+            fill
+            className="object-cover"
+            priority={true}
+            sizes="100vw"
+            quality={90}
+          />
+        </div>
+      ))}
+      
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40 z-2" />
+
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-8">
+          <h1 className="text-5xl md:text-6xl font-bold mb-8 text-shadow-lg drop-shadow-2xl [text-shadow:_2px_2px_10px_rgb(0_0_0_/_90%)]">
             Discover the World on Two Wheels
           </h1>
-          <p className="text-xl md:text-2xl mb-12">
+          <p className="text-xl md:text-2xl mb-12 text-shadow-md [text-shadow:_1px_1px_5px_rgb(0_0_0_/_80%)]">
             Book unforgettable bike tours and explore breathtaking destinations
           </p>
           <div className="flex justify-center flex-col sm:flex-row items-center gap-4" ref={searchRef}>
