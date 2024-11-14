@@ -3,24 +3,21 @@
 import { Navigation } from "@/components/Navigation";
 import { TourDetails } from "@/components/TourDetails";
 import { useEffect, useState } from "react";
+import { use } from "react"; // Import the React use function
 
 export default function TourDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>; // Update type to Promise
 }) {
+  const resolvedParams = use(params); // Unwrap params
   const [isClient, setIsClient] = useState(false);
-  const [slug, setSlug] = useState<string>("");
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
 
-    (async () => {
-      const resolvedParams = await params;
-      setSlug(resolvedParams.slug);
-    })();
-  }, [params]);
-  if (!isClient || !slug) {
+  if (!isClient || !resolvedParams.slug) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50">
         <div className="animate-pulse">Loading...</div>
@@ -31,7 +28,7 @@ export default function TourDetailPage({
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navigation />
-      <TourDetails slug={slug} />
+      <TourDetails slug={resolvedParams.slug} />
     </div>
   );
 }
