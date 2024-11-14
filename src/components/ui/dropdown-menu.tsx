@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu as NextUIDropdownMenu, DropdownItem } from "@nextui-org/react";
 
 // Re-export NextUI components with our preferred names

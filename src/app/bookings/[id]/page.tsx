@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -27,13 +27,7 @@ export default function BookingDetailsPage({
   const [isClient, setIsClient] = useState(false);
   const [articles, setArticles] = useState<Omit<Article, "id">[]>([]);
 
-  useEffect(() => {
-    setIsClient(true);
-    fetchBooking();
-    fetchBookingArticles();
-  }, []);
-
-  async function fetchBooking() {
+  const fetchBooking = useCallback(async () => {
     setIsLoading(true);
     try {
       const bookings = await getAllBookings(await getContractAddress());
@@ -48,13 +42,13 @@ export default function BookingDetailsPage({
         setError("Booking not found");
       }
     } catch (error) {
-      setError("Error fetching booking");
+      setError("Error fetching booking, " + error);
     } finally {
       setIsLoading(false);
     }
-  }
-
-  async function fetchBookingArticles() {
+  }, [resolvedParams.id, getContractAddress]);
+  
+  const fetchBookingArticles = useCallback(async () => {
     try {
       const articles = await getBookingArticles(
         parseInt(resolvedParams.id),
@@ -65,7 +59,13 @@ export default function BookingDetailsPage({
     } catch (error) {
       console.error("Error fetching booking articles:", error);
     }
-  }
+  }, [resolvedParams.id, getContractAddress, getBookingArticles]);
+
+  useEffect(() => {
+    setIsClient(true);
+    fetchBooking();
+    fetchBookingArticles();
+  }, [fetchBooking, fetchBookingArticles]);
 
   async function handlePayBooking() {
     if (!booking) return;
@@ -271,9 +271,7 @@ export default function BookingDetailsPage({
                       <span className="text-black">Completed:</span>
                       <span
                         className={
-                          booking.isCompleted
-                            ? "text-green-600"
-                            : "text-black"
+                          booking.isCompleted ? "text-green-600" : "text-black"
                         }
                       >
                         {booking.isCompleted ? "Yes" : "No"}

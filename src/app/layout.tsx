@@ -32,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextUIProvider>
+        <NextUIProvider className="light">
           <SettingsProvider>
             <Web3Provider>
               <CartProvider>

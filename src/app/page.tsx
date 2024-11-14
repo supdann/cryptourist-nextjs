@@ -50,7 +50,7 @@ export default function BikeToursLanding() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [getAllArticles]);
 
   return (
     <div className="flex flex-col min-h-screen">

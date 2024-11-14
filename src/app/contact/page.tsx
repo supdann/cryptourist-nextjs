@@ -58,7 +58,7 @@ export default function ContactPage() {
     };
 
     fetchBookings();
-  }, [isConnected, userAddress, formData.reason]);
+  }, [isConnected, userAddress, formData.reason, getAllBookings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
