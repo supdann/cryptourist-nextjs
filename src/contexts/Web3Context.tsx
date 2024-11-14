@@ -22,6 +22,18 @@ interface Web3ContextType {
   payBooking: (bookingId: number, amount: string) => Promise<void>;
 }
 
+interface RawBookingData {
+  ids: bigint[];
+  amounts: bigint[];
+  operatorFees: bigint[];
+  timestamps: bigint[];
+  customers: string[];
+  payers: string[];
+  paidStatus: boolean[];
+  completedStatus: boolean[];
+  refundedStatus: boolean[];
+}
+
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export function Web3Provider({ children }: { children: ReactNode }) {
@@ -139,21 +151,40 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   //   return bookings.find((booking) => booking.id === bookingId);
   // }
 
-  function transformData(rawData: any): Booking[] {
-    const ids = rawData.ids || rawData[0];
-    const amounts = rawData.amounts || rawData[1];
-    const operatorFees = rawData.operatorFees || rawData[2];
-    const timestamps = rawData.timestamps || rawData[3];
-    const customers = rawData.customers || rawData[4];
-    const payers = rawData.payers || rawData[5];
-    const paidStatus = rawData.paidStatus || rawData[6];
-    const completedStatus = rawData.completedStatus || rawData[7];
-    const refundedStatus = rawData.refundedStatus || rawData[8];
+  function transformData(
+    rawData:
+      | RawBookingData
+      | [
+          bigint[],
+          bigint[],
+          bigint[],
+          bigint[],
+          string[],
+          string[],
+          boolean[],
+          boolean[],
+          boolean[]
+        ]
+  ): Booking[] {
+    const ids = "ids" in rawData ? rawData.ids : rawData[0];
+    const amounts = "amounts" in rawData ? rawData.amounts : rawData[1];
+    const operatorFees =
+      "operatorFees" in rawData ? rawData.operatorFees : rawData[2];
+    const timestamps =
+      "timestamps" in rawData ? rawData.timestamps : rawData[3];
+    const customers = "customers" in rawData ? rawData.customers : rawData[4];
+    const payers = "payers" in rawData ? rawData.payers : rawData[5];
+    const paidStatus =
+      "paidStatus" in rawData ? rawData.paidStatus : rawData[6];
+    const completedStatus =
+      "completedStatus" in rawData ? rawData.completedStatus : rawData[7];
+    const refundedStatus =
+      "refundedStatus" in rawData ? rawData.refundedStatus : rawData[8];
 
-    return ids.map((id: any, index: number) => ({
+    return ids.map((id, index) => ({
       id: Number(id),
-      totalAmount: parseFloat(fromWei(amounts[index], "ether")),
-      operatorFee: parseFloat(fromWei(operatorFees[index], "ether")),
+      totalAmount: parseFloat(fromWei(amounts[index].toString(), "ether")),
+      operatorFee: parseFloat(fromWei(operatorFees[index].toString(), "ether")),
       timestamp: new Date(Number(timestamps[index]) * 1000),
       customer: customers[index],
       payer: payers[index],
