@@ -2,7 +2,7 @@
 
 import { CONTRACT_ADDRESS } from "@/lib/constants";
 import { contractABI } from "@/lib/contractABI";
-import { BlockchainBooking, Booking } from "@/types";
+import { Booking } from "@/types";
 import { Contract, ethers, formatUnits } from "ethers";
 import { BrowserProvider } from "ethers";
 import {
