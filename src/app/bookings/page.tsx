@@ -6,8 +6,8 @@ import { BrowserProvider, Contract } from "ethers";
 import { contractABI } from "@/lib/contractABI";
 import { Button } from "@/components/ui/button";
 import { FEATURED_TOURS, CONTRACT_ADDRESS } from "@/lib/constants";
-import { BlockchainBooking, Booking } from "@/types";
 import { Navigation } from "@/components/Navigation";
+import { Booking, BlockchainBooking } from "@/types";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -63,12 +63,14 @@ export default function BookingsPage() {
           throw new Error("No booking data returned from contract");
         }
 
-        const transformedBookings = result.map((booking: BlockchainBooking) => ({
-          id: Number(booking.id),
-          tourId: Number(booking.tourId),
-          date: new Date(Number(booking.date) * 1000),
-          status: booking.status,
-        }));
+        const transformedBookings = result.map(
+          (booking: BlockchainBooking) => ({
+            id: Number(booking.id),
+            tourId: Number(booking.tourId),
+            date: new Date(Number(booking.date) * 1000),
+            status: booking.status,
+          })
+        );
 
         setBookings(transformedBookings);
       } catch (contractError) {
@@ -136,7 +138,9 @@ export default function BookingsPage() {
                     className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
                   >
                     <div>
-                      <h3 className="text-xl font-semibold mb-2">{tour.title}</h3>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {tour.title}
+                      </h3>
                       <p className="text-gray-600">
                         {tour.city}, {tour.country}
                       </p>
