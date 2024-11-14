@@ -8,6 +8,7 @@ import { useWeb3 } from "@/contexts/Web3Context";
 import { Booking } from "@/types";
 import { FEATURED_TOURS } from "@/lib/constants";
 import { use } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function BookingDetailsPage({
   params,
@@ -16,6 +17,7 @@ export default function BookingDetailsPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { getContractAddress } = useSettings();
   const { getAllBookings, payBooking } = useWeb3();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,41 +30,59 @@ export default function BookingDetailsPage({
   }, []);
 
   useEffect(() => {
-    async function loadBookingDetails() {
+    let intervalId: NodeJS.Timeout;
+
+    async function checkBookingStatus() {
       try {
-        const bookings = await getAllBookings();
-        const foundBooking = bookings.find(
+        const contractAddress = await getContractAddress();
+        const bookings = await getAllBookings(contractAddress);
+        const updatedBooking = bookings.find(
           (b) => b.id === parseInt(resolvedParams.id)
         );
 
-        if (!foundBooking) {
-          setError("Booking not found");
-          setIsLoading(false);
-          return;
+        if (updatedBooking) {
+          setBooking(updatedBooking);
+          
+          // Clear interval if booking is paid and completed
+          if (updatedBooking.isPaid && updatedBooking.isCompleted) {
+            clearInterval(intervalId);
+          }
         }
-
-        setBooking(foundBooking);
-        setIsLoading(false);
       } catch (error) {
-        console.error("Error loading booking details:", error);
-        setError("Failed to load booking details");
-        setIsLoading(false);
+        console.error("Error checking booking status:", error);
+        clearInterval(intervalId);
       }
     }
 
-    if (isClient) {
-      loadBookingDetails();
+    if (isClient && booking && (!booking.isPaid || !booking.isCompleted)) {
+      // Initial check
+      checkBookingStatus();
+      
+      // Set up interval
+      intervalId = setInterval(checkBookingStatus, 2000);
     }
-  }, [resolvedParams.id, getAllBookings, isClient]);
+
+    // Cleanup function
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isClient, booking, resolvedParams.id, getAllBookings, getContractAddress]);
 
   async function handlePayBooking() {
     if (!booking) return;
-    
+
     setIsProcessing(true);
     try {
-      await payBooking(booking.id, booking.totalAmount.toString());
+      const contractAddress = await getContractAddress();
+      await payBooking(
+        booking.id,
+        booking.totalAmount.toString(),
+        contractAddress
+      );
       // Refresh booking details after payment
-      const bookings = await getAllBookings();
+      const bookings = await getAllBookings(contractAddress);
       const updatedBooking = bookings.find((b) => b.id === booking.id);
       if (updatedBooking) {
         setBooking(updatedBooking);
@@ -126,7 +146,7 @@ export default function BookingDetailsPage({
       <main className="container mx-auto px-4 py-8 mt-16">
         <div className="max-w-3xl mx-auto">
           <div className="mb-6 flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Booking Details</h1>
+            <h1 className="text-3xl font-bold text-black">Booking Details</h1>
             <Button variant="outline" onClick={() => router.push("/bookings")}>
               Back to Bookings
             </Button>
@@ -135,7 +155,9 @@ export default function BookingDetailsPage({
           <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h2 className="text-lg font-semibold mb-2">Tour Information</h2>
+                <h2 className="text-lg font-semibold mb-2 text-black">
+                  Tour Information
+                </h2>
                 <p className="text-gray-600">Tour: {tour.title}</p>
                 <p className="text-gray-600">
                   Location: {tour.city}, {tour.country}
@@ -145,7 +167,9 @@ export default function BookingDetailsPage({
                 </p>
               </div>
               <div>
-                <h2 className="text-lg font-semibold mb-2">Payment Details</h2>
+                <h2 className="text-lg font-semibold mb-2 text-black">
+                  Payment Details
+                </h2>
                 <p className="text-gray-600">
                   Total Amount: ${booking.totalAmount.toFixed(2)}
                 </p>
@@ -168,12 +192,16 @@ export default function BookingDetailsPage({
             </div>
 
             <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-2">Booking Status</h2>
+              <h2 className="text-lg font-semibold mb-2 text-black">
+                Booking Status
+              </h2>
               <div className="space-y-4">
                 <p className="text-gray-600">
                   Completed:{" "}
                   <span
-                    className={booking.isCompleted ? "text-green-600" : "text-gray-600"}
+                    className={
+                      booking.isCompleted ? "text-green-600" : "text-gray-600"
+                    }
                   >
                     {booking.isCompleted ? "Yes" : "No"}
                   </span>
@@ -181,7 +209,9 @@ export default function BookingDetailsPage({
                 <p className="text-gray-600">
                   Refunded:{" "}
                   <span
-                    className={booking.isRefunded ? "text-red-600" : "text-gray-600"}
+                    className={
+                      booking.isRefunded ? "text-red-600" : "text-gray-600"
+                    }
                   >
                     {booking.isRefunded ? "Yes" : "No"}
                   </span>
@@ -213,4 +243,4 @@ export default function BookingDetailsPage({
       </main>
     </div>
   );
-} 
+}

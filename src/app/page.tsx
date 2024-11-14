@@ -10,11 +10,18 @@ import { ReviewCarousel } from "@/components/ReviewCarousel";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
+import { useWeb3 } from "@/contexts/Web3Context";
+import { useSettings } from "@/contexts/SettingsContext";
+import { Article } from "@/types";
 
 export default function BikeToursLanding() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const { getContractAddress } = useSettings();
+  const { getAllArticles } = useWeb3();
+  const [articles, setArticles] = useState<Article[]>([]);
 
   // Get unique locations from FEATURED_TOURS
   const locations = Array.from(
@@ -23,6 +30,15 @@ export default function BikeToursLanding() {
 
   // Close suggestions when clicking outside
   useEffect(() => {
+    const fetchArticles = async () => {
+      const contractAddress = await getContractAddress();
+      const articles = await getAllArticles(contractAddress);
+      console.log(articles);
+      setArticles(articles);
+    };
+
+    fetchArticles();
+
     function handleClickOutside(event: MouseEvent) {
       if (
         searchRef.current &&
@@ -56,9 +72,18 @@ export default function BikeToursLanding() {
               Featured Bike Tours
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {FEATURED_TOURS.map((tour, index) => (
-                <TourCard key={index} {...tour} />
-              ))}
+              {articles
+                .filter((article) => article.active)
+                .map((article, index) => (
+                  <TourCard
+                    key={index}
+                    {...{
+                      ...FEATURED_TOURS[index],
+                      price: article.price,
+                      title: article.title,
+                    }}
+                  />
+                ))}
             </div>
           </div>
         </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import { contractABI } from "@/lib/contractABI";
-import { Booking } from "@/types";
+import { Article, Booking } from "@/types";
 import { Contract, ethers, formatUnits, BrowserProvider } from "ethers";
 import {
   createContext,
@@ -19,9 +19,15 @@ interface Web3ContextType {
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   getAllBookings: (contractAddress: string) => Promise<Booking[]>;
+  getAllArticles: (contractAddress: string) => Promise<Article[]>;
   payBooking: (
     bookingId: number,
     amount: string,
+    contractAddress: string
+  ) => Promise<void>;
+  createBooking: (
+    articleIds: string[],
+    userAddress: string,
     contractAddress: string
   ) => Promise<void>;
 }
@@ -154,6 +160,21 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return transformedBookings;
   }
 
+  async function getAllArticles(contractAddress: string): Promise<Article[]> {
+    if (!window.ethereum) {
+      return [];
+    }
+    const provider = new BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new Contract(contractAddress, contractABI, signer);
+
+    const result = await contract.getAllArticles();
+    console.log("Raw contract result:", result);
+
+    const transformedArticles = transformArticleData(result);
+    return transformedArticles;
+  }
+
   function fromWei(value: string, unit: string) {
     return formatUnits(value, unit);
   }
@@ -206,6 +227,24 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }));
   }
 
+  function transformArticleData(
+    rawData: [bigint[], string[], string[], number[], boolean[]]
+  ): Article[] {
+    const ids = rawData[0];
+    const titles = rawData[1];
+    const addresses = rawData[2];
+    const prices = rawData[3];
+    const activeStatus = rawData[4];
+    
+    return ids.map((id, index) => ({
+      id: id.toString(),
+      title: titles[index],
+      address: addresses[index],
+      price: Number(prices[index]),
+      active: Boolean(activeStatus[index]),
+    }));
+  }
+
   async function payBooking(
     bookingId: number,
     amount: string,
@@ -232,6 +271,29 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function createBooking(
+    articleIds: string[],
+    userAddress: string,
+    contractAddress: string
+  ): Promise<void> {
+    if (!window.ethereum) {
+      throw new Error("Ethereum provider not found");
+    }
+
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new Contract(contractAddress, contractABI, signer);
+
+      // Call the smart contract's createBooking function
+      const tx = await contract.createBooking(articleIds, userAddress);
+      await tx.wait();
+    } catch (error) {
+      console.error("Error creating booking:", error);
+      throw error;
+    }
+  }
+
   return (
     <Web3Context.Provider
       value={{
@@ -240,7 +302,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         connectWallet,
         disconnectWallet,
         getAllBookings,
+        getAllArticles,
         payBooking,
+        createBooking,
       }}
     >
       {children}
