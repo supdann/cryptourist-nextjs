@@ -19,6 +19,10 @@ interface Web3ContextType {
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   getAllBookings: (contractAddress: string) => Promise<Booking[]>;
+  getBookingArticles: (
+    bookingId: number,
+    contractAddress: string
+  ) => Promise<Omit<Article, "id">[]>;
   getAllArticles: (contractAddress: string) => Promise<Article[]>;
   payBooking: (
     bookingId: number,
@@ -51,13 +55,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
   const [isConnected, setIsConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
-  // const [contractAddress, setContractAddress] = useState(CONTRACT_ADDRESS);
 
   useEffect(() => {
     checkIfWalletIsConnected();
-    // Print current contract address
     getContractAddress().then((address) => {
-      // setContractAddress(address);
       console.log("Current contract address:", address);
     });
   }, [settings]);
@@ -160,6 +161,28 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return transformedBookings;
   }
 
+  async function getBookingArticles(
+    bookingId: number,
+    contractAddress: string
+  ): Promise<Omit<Article, "id">[]> {
+    if (!window.ethereum) {
+      return [];
+    }
+    const provider = new BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new Contract(contractAddress, contractABI, signer);
+
+    const result = await contract.getBookingArticles(bookingId);
+    console.log("getBookingArticles result:", result);
+
+    if (!result) {
+      throw new Error("No booking data returned from contract");
+    }
+
+    const transformedArticles = transformArticleDataWithoutID(result);
+    return transformedArticles;
+  }
+
   async function getAllArticles(contractAddress: string): Promise<Article[]> {
     if (!window.ethereum) {
       return [];
@@ -169,7 +192,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const contract = new Contract(contractAddress, contractABI, signer);
 
     const result = await contract.getAllArticles();
-    console.log("Raw contract result:", result);
+    console.log("getAllArticles result:", result);
 
     const transformedArticles = transformArticleData(result);
     return transformedArticles;
@@ -178,11 +201,6 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   function fromWei(value: string, unit: string) {
     return formatUnits(value, unit);
   }
-
-  // async function getBookingDetails(bookingId: bigint): Promise<Booking> {
-  //   const bookings = await getAllBookings();
-  //   return bookings.find((booking) => booking.id === bookingId);
-  // }
 
   function transformData(
     rawData:
@@ -227,6 +245,23 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }));
   }
 
+  function transformArticleDataWithoutID(
+    rawData: [string, string, number, boolean][]
+  ): Omit<Article, "id">[] {
+    console.log("transformArticleDataWithoutID: rawData", rawData);
+    // const titles = rawData[0];
+    // const addresses = rawData[1];
+    // const prices = rawData[2];
+    // const activeStatus = rawData[3];
+
+    return rawData.map((item) => ({
+      title: item[0],
+      address: item[1],
+      price: item[2],
+      active: item[3],
+    }));
+  }
+
   function transformArticleData(
     rawData: [bigint[], string[], string[], number[], boolean[]]
   ): Article[] {
@@ -235,7 +270,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const addresses = rawData[2];
     const prices = rawData[3];
     const activeStatus = rawData[4];
-    
+
     return ids.map((id, index) => ({
       id: id.toString(),
       title: titles[index],
@@ -302,6 +337,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         connectWallet,
         disconnectWallet,
         getAllBookings,
+        getBookingArticles,
         getAllArticles,
         payBooking,
         createBooking,

@@ -2,10 +2,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin } from "lucide-react";
 import { Tour } from "@/types";
+import { useCart } from "@/contexts/CartContext";
 
 type TourCardProps = Tour;
 
 export function TourCard({
+  id,
   title,
   city,
   country,
@@ -13,11 +15,34 @@ export function TourCard({
   price,
   imageUrl,
   description,
+  ...tour
 }: TourCardProps) {
+  const { addToCart, removeFromCart, items } = useCart();
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "CAM",
   }).format(price / 10 ** 18);
+
+  const isInCart = items.some((item) => item.id === id);
+
+  const handleCartAction = () => {
+    if (isInCart) {
+      removeFromCart(id);
+    } else {
+      addToCart({
+        id,
+        title,
+        city,
+        country,
+        duration,
+        price,
+        imageUrl,
+        description,
+        ...tour,
+      });
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -46,15 +71,11 @@ export function TourCard({
             {formattedPrice}
           </span>
           <Button
-            variant="outline"
+            variant={isInCart ? "secondary" : "outline"}
             size="sm"
-            onClick={() =>
-              (window.location.href = `/tours/${title
-                .toLowerCase()
-                .replace(/\s+/g, "-")}`)
-            }
+            onClick={handleCartAction}
           >
-            Book Now
+            {isInCart ? "Remove" : "Add to Cart"}
           </Button>
         </div>
       </div>

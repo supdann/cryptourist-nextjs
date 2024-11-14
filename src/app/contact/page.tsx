@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { Booking } from "@/types/booking";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const CONTACT_REASONS = [
   "General Inquiry",
@@ -21,6 +22,7 @@ const CONTACT_REASONS = [
 type ContactReason = (typeof CONTACT_REASONS)[number];
 
 export default function ContactPage() {
+  const { getContractAddress } = useSettings();
   const { isConnected, userAddress, getAllBookings } = useWeb3();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [formData, setFormData] = useState({
@@ -48,7 +50,7 @@ export default function ContactPage() {
           return;
         }
 
-        const bookings = await getAllBookings();
+        const bookings = await getAllBookings(await getContractAddress());
         setBookings(bookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);

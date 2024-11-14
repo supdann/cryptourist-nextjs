@@ -1,14 +1,21 @@
-import { Bike, Settings, LogOut, User } from "lucide-react";
+import { Bike, Settings, LogOut, User, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useRouter } from "next/navigation";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@nextui-org/react";
+import { useCart } from "@/contexts/CartContext";
 
 export const Navigation = () => {
   const { isConnected, userAddress, connectWallet, disconnectWallet } =
     useWeb3();
   const router = useRouter();
+  const { items } = useCart();
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-md fixed top-0 left-0 right-0 z-50">
@@ -25,6 +32,12 @@ export const Navigation = () => {
           </Link>
         </div>
         <div className="flex items-center space-x-6">
+          <Link
+            href="/"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
+          >
+            Home
+          </Link>
           {isConnected && (
             <Link
               href="/bookings"
@@ -34,12 +47,6 @@ export const Navigation = () => {
             </Link>
           )}
           <Link
-            href="#"
-            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
-          >
-            About
-          </Link>
-          <Link
             href="/contact"
             className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
           >
@@ -47,6 +54,16 @@ export const Navigation = () => {
           </Link>
           {isConnected ? (
             <div className="flex items-center space-x-3 ml-2">
+              <Link href="/shopping-cart" className="relative">
+                <Button variant="outline" size="sm" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  {items.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {items.length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
               <span className="text-sm bg-blue-50 text-blue-700 py-1.5 px-3 rounded-full font-medium">
                 {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
               </span>

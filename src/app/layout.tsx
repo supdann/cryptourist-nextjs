@@ -4,6 +4,7 @@ import "./globals.css";
 import { Web3Provider } from "@/contexts/Web3Context";
 import { NextUIProvider } from "@nextui-org/react";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { CartProvider } from "@/contexts/CartContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,7 +34,11 @@ export default function RootLayout({
       >
         <NextUIProvider>
           <SettingsProvider>
-            <Web3Provider>{children}</Web3Provider>
+            <Web3Provider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </Web3Provider>
           </SettingsProvider>
         </NextUIProvider>
       </body>

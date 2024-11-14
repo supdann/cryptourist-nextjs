@@ -81,6 +81,7 @@ export default function BikeToursLanding() {
                       ...FEATURED_TOURS[index],
                       price: article.price,
                       title: article.title,
+                      id: article.id,
                     }}
                   />
                 ))}

@@ -16,7 +16,9 @@ export function BookingCard({ booking, tour }: BookingCardProps) {
       className="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
     >
       <div>
-        <h3 className="text-xl font-semibold mb-2">{tour.title}</h3>
+        <h3 className="text-xl font-semibold mb-2 text-black">
+          {tour.title}
+        </h3>
         <p className="text-gray-600">
           {tour.city}, {tour.country}
         </p>

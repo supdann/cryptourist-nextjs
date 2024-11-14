@@ -11,7 +11,6 @@ import {
 // Define the Settings interface
 interface Settings {
   contractAddress: string;
-  theme: "light" | "dark";
   notifications: boolean;
 }
 
@@ -24,7 +23,6 @@ interface SettingsContextType {
 
 const defaultSettings: Settings = {
   contractAddress: process.env.NEXT_PUBLIC_DEFAULT_CONTRACT_ADDRESS || "",
-  theme: "light",
   notifications: true,
 };
 
